@@ -1,0 +1,65 @@
+version: "3.8"
+
+services:
+  # The "Dispatcher" - handles the task queue and communication
+  redis:
+    image: redis:7-alpine
+    volumes:
+      - redis_data:/data
+
+  # The "Front Desk" - our FastAPI web server
+  api:
+    build: .
+    command: uvicorn api.main:app --host 0.0.0.0 --port 8000 --reload
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./:/app
+      - audio_temp:/tmp/recall/audio
+    environment:
+      - REDIS_URL=redis://redis:6379/0
+      - DATABASE_URL=sqlite:///./data/recall.db
+    # We load our sensitive tokens from the .env file
+    env_file:
+      - .env
+    depends_on:
+      - redis
+
+  # The "Chef" - handles transcription and AI analysis
+  worker:
+    build: .
+    command: celery -A worker.celery_app worker --loglevel=info --concurrency=1
+    volumes:
+      - ./:/app
+      - audio_temp:/tmp/recall/audio
+      - ./data:/app/data
+    environment:
+      - REDIS_URL=redis://redis:6379/0
+      - DATABASE_URL=sqlite:///./data/recall.db
+    env_file:
+      - .env
+    depends_on:
+      - redis
+
+  # The "Face" - our Telegram bot
+  bot:
+    build: .
+    command: python -m bot.main
+    volumes:
+      - ./:/app
+      - ./data:/app/data
+    environment:
+      - REDIS_URL=redis://redis:6379/0
+      - DATABASE_URL=sqlite:///./data/recall.db
+      # The bot needs to talk to the 'api' service within the Docker network
+      - API_BASE_URL=http://api:8000/api/v1
+    env_file:
+      - .env
+    depends_on:
+      - api
+      - redis
+
+# These ensure our data (like your history and settings) stays safe even if we restart
+volumes:
+  redis_data:
+  audio_temp:
