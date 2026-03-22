@@ -1,60 +1,72 @@
-# RECALL 🎙️🚀
+# Recall
 
-**RECALL** is your AI teammate for hackathons. It listens to your voice conversations, transcribes them locally using Whisper, and uses Gemini AI to extract structured development briefs (features, decisions, next steps, and blockers) directly to your Telegram.
+Your AI teammate that listens, remembers, and helps you build.
 
----
+Most ideas die because they never get captured properly. You talk 
+to a mentor, have a breakthrough with a friend, or think of 
+something in the shower — and by the time you sit down to build, 
+half of it is gone. Recall fixes that.
 
-## ⚡ Quick Start
+Send a voice message on Telegram. Recall transcribes it, extracts 
+what matters, and hands you back a structured brief with features, 
+decisions, next steps, and blockers. It also challenges your 
+thinking and generates context-aware prompts you can drop straight 
+into any AI coding tool.
 
-### 1. Get Your Tokens
-*   **Telegram:** Message [@BotFather](https://t.me/botfather) to create a bot and get your **BOT_TOKEN**.
-*   **Gemini:** Get a free API key from [Google AI Studio](https://aistudio.google.com/).
-*   **Internal Security:** Generate a random string for your `API_TOKEN` (e.g., `my-super-secret-token`).
+## Stack
 
-### 2. Configure Your Environment
-Copy the example environment file and fill in your keys:
+- **Bot:** python-telegram-bot
+- **Backend:** FastAPI + Celery + Redis
+- **Transcription:** Groq Whisper API
+- **AI:** Groq Llama 3.3 70B
+- **Database:** SQLite + SQLAlchemy
+- **Infrastructure:** Docker + Docker Compose
+
+## Setup
 ```bash
 cp .env.example .env
-# Edit .env with your favorite text editor
-```
-
-### 3. Launch with Docker (Recommended)
-This starts the Bot, the API, the Database, and the AI Workers all at once:
-```bash
+# Add your tokens — see Environment Variables below
 docker-compose up --build
 ```
-*Note: The first run will take a few minutes as it downloads the Whisper AI model (~74MB).*
 
----
+First run takes a few minutes. After that, just send a voice message.
 
-## 🤖 Telegram Commands
+## Commands
 
-*   **Send a Voice Message:** 🎧 Just record and send! The bot will reply with a structured brief.
-*   **/challenge:** 🤔 Get Gemini to analyze your latest brief and ask probing questions about your plan.
-*   **/history:** 📜 View a list of your 5 most recent project briefs with their IDs.
-*   **/get {ID}:** 🔍 Retrieve the full details of a specific brief (e.g., `/get 1`).
+| Command | Description |
+|---------|-------------|
+| Voice message | Transcribe and generate a structured brief |
+| /challenge | Probing questions that stress-test your latest idea |
+| /history | Your 5 most recent briefs |
+| /get {id} | Full details of a specific brief |
 
----
+## Environment Variables
 
-## 🛠️ Manual Development
+| Variable | Description |
+|----------|-------------|
+| TELEGRAM_BOT_TOKEN | From @BotFather on Telegram |
+| GROQ_API_KEY | From console.groq.com |
+| API_TOKEN | Any random secret string for internal auth |
+| REDIS_URL | Defaults to redis://redis:6379/0 |
+| DATABASE_URL | Defaults to sqlite:///./data/recall.db |
 
-If you prefer to run things without Docker:
+## Architecture
 
-### 1. Install Dependencies
-```bash
-pip install -r requirements.txt
+The bot receives voice messages and forwards them to a FastAPI 
+backend. Audio is transcribed via Groq Whisper, then passed to 
+Llama 3.3 70B which extracts structured data and saves it to 
+SQLite. Celery handles async processing with Redis as the broker, 
+so the bot stays responsive while heavy work runs in the background.
+
+```mermaid
+flowchart LR
+    A[Telegram\nVoice message] -->|audio| B[Bot\npython-telegram-bot]
+    B -->|job| C[API\nFastAPI]
+    C -->|queue| D[Redis\nTask queue]
+    D -->|consume| E[Worker\nCelery]
+    E -->|transcribe| F[nGroq API]
+    E -->|summarize| G[Llama 3.3\nGroq API]
+    E -->|save| H[Database\nSQLite]
+    H -->|brief| B
+    B -->|response| A
 ```
-
-### 2. Run the Components (In separate terminals)
-*   **Redis:** `docker run -p 6379:6379 redis` (Required for the task queue)
-*   **API:** `uvicorn api.main:app --reload`
-*   **Worker:** `celery -A worker.celery_app worker --loglevel=info -P solo`
-*   **Bot:** `python -m bot.main`
-
----
-
-## 🏗️ Architecture
-*   **Interface:** `python-telegram-bot`
-*   **Backend:** `FastAPI` + `Celery` + `Redis`
-*   **AI:** `OpenAI Whisper` (Local Transcription) & `Google Gemini 1.5 Flash` (Brief Extraction)
-*   **Database:** `SQLite` + `SQLAlchemy`
