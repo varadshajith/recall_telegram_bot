@@ -11,7 +11,7 @@ celery_app = Celery(
     "recall_worker",
     broker=settings.redis_url,
     backend=settings.redis_url,
-    include=["worker.tasks"]
+    include=["worker.tasks"],
 )
 
 celery_app.conf.update(

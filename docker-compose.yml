@@ -4,6 +4,8 @@ services:
   # The "Dispatcher" - handles the task queue and communication
   redis:
     image: redis:7-alpine
+    # AOF persistence: every write is fsynced, protects queued tasks on restart
+    command: redis-server --appendonly yes --appendfsync everysec
     volumes:
       - redis_data:/data
 

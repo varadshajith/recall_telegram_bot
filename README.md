@@ -37,8 +37,41 @@ First run takes a few minutes. After that, just send a voice message.
 |---------|-------------|
 | Voice message | Transcribe and generate a structured brief |
 | /challenge | Probing questions that stress-test your latest idea |
+| /prompt | Ask clarifying questions and generate a coding prompt |
 | /history | Your 5 most recent briefs |
+| /brainstorm | Feature ideas, pivots, and similar products |
+| /summary | Weekly digest grouped by tags |
+| /search {query} | Semantic search across your briefs |
+| /evolution | Timeline of how ideas evolved across briefs |
+| /ideas [tag] | List briefs filtered by tag |
+| /add @{username} | Invite a collaborator to your session |
+| /cancel | Cancel the /prompt conversation |
 | /get {id} | Full details of a specific brief |
+
+## Command Registration (BotFather)
+
+Bot command buttons shown in the Telegram UI are populated via BotFather's `/setcommands`.
+
+In BotFather:
+1. Run `/setcommands`
+2. Add the following commands (one per line):
+   - `prompt - Ask questions and generate a coding prompt`
+   - `brainstorm - Generate feature ideas and pivots`
+   - `summary - Weekly digest grouped by tags`
+   - `search - Semantic search across briefs`
+   - `evolution - Timeline of how ideas evolved`
+   - `ideas - List briefs filtered by tag`
+   - `add - Invite a collaborator to your session`
+   - `challenge - Probing questions on your latest brief`
+   - `history - Your recent briefs`
+   - `get - View full details for a prompt id`
+   - `cancel - Cancel the /prompt flow`
+3. Save/confirm.
+
+Optional: you can also register commands programmatically after setting `TELEGRAM_BOT_TOKEN` by running:
+```bash
+python scripts/register_telegram_commands.py
+```
 
 ## Environment Variables
 

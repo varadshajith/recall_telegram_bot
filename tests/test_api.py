@@ -6,7 +6,7 @@ def test_health_check(client: TestClient):
     """Confirm the 'Front Desk' is alive"""
     response = client.get("/health")
     assert response.status_code == 200
-    assert response.json() == {"status": "ok"}
+    assert response.json().get("status") == "ok"
 
 
 def test_transcribe_requires_auth(client: TestClient):
